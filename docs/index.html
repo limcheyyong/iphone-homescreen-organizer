@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>主畫面整理</title>
+<meta name="description" content="免費的 Mac 工具：用 USB 接上 iPhone，一鍵把 App 依類型放進資料夾，先預覽再套用，隨時可以還原。" />
+<meta property="og:title" content="主畫面整理：一鍵整理 iPhone 主畫面" />
+<meta property="og:description" content="用 USB 接上 Mac，App 依 App Store 類型自動放進資料夾。免費、資料不離開你的電腦。" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='2' y='2' width='9' height='9' rx='2.5' fill='%23007AFF'/><rect x='13' y='2' width='9' height='9' rx='2.5' fill='%23FF9F0A'/><rect x='2' y='13' width='9' height='9' rx='2.5' fill='%2330D158'/><rect x='13' y='13' width='9' height='9' rx='2.5' fill='%23BF5AF2'/></svg>" />
+<style>
+  :root {
+    --accent: #007AFF; --accent-press: #0062CC; --on-accent: #FFFFFF;
+    --bg: #FFFFFF; --bg-2: #F5F5F7; --card: #FFFFFF; --separator: rgba(60, 60, 67, .14);
+    --label: #1D1D1F; --label-2: rgba(60, 60, 67, .78); --label-3: rgba(60, 60, 67, .5);
+    --phone: #1D1D1F; --screen: linear-gradient(160deg, #A9C7F5, #D8B4F0 55%, #F6C8A8);
+    --folder: rgba(255, 255, 255, .42); --shadow: 0 1px 2px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.08);
+    --radius: 18px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --accent: #0A84FF; --accent-press: #409CFF;
+      --bg: #000000; --bg-2: #111113; --card: #1C1C1E; --separator: rgba(235, 235, 245, .14);
+      --label: #F5F5F7; --label-2: rgba(235, 235, 245, .72); --label-3: rgba(235, 235, 245, .45);
+      --phone: #3A3A3C; --screen: linear-gradient(160deg, #23355E, #4A2F63 55%, #6B3F35);
+      --folder: rgba(255, 255, 255, .18); --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --accent: #0A84FF; --accent-press: #409CFF;
+    --bg: #000000; --bg-2: #111113; --card: #1C1C1E; --separator: rgba(235, 235, 245, .14);
+    --label: #F5F5F7; --label-2: rgba(235, 235, 245, .72); --label-3: rgba(235, 235, 245, .45);
+    --phone: #3A3A3C; --screen: linear-gradient(160deg, #23355E, #4A2F63 55%, #6B3F35);
+    --folder: rgba(255, 255, 255, .18); --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.5);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--label); line-height: 1.6;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+  a { color: var(--accent); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  section { padding: 72px 0; }
+  h1, h2, h3 { letter-spacing: -.02em; line-height: 1.2; margin: 0; }
+  h2 { font-size: clamp(26px, 4vw, 34px); margin-bottom: 12px; }
+  .lead { color: var(--label-2); font-size: 17px; margin: 0; }
+  .center { text-align: center; }
+  .center .lead { max-width: 560px; margin: 0 auto; }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid var(--separator); }
+  nav .wrap { display: flex; align-items: center; gap: 16px; height: 52px; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--label); text-decoration: none; }
+  .brand svg { width: 22px; height: 22px; }
+  nav .links { margin-left: auto; display: flex; gap: 20px; font-size: 14px; }
+  nav .links a { color: var(--label-2); text-decoration: none; }
+  nav .links a:hover { color: var(--label); }
+  @media (max-width: 560px) { nav .links a:not(.keep) { display: none; } }
+
+  /* buttons */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 12px; font-size: 16px; font-weight: 600;
+    text-decoration: none; background: var(--accent); color: var(--on-accent); transition: transform .1s ease-out, background .15s; }
+  .btn:hover { background: var(--accent-press); }
+  .btn:active { transform: scale(.97); }
+  .btn svg { width: 18px; height: 18px; }
+  .btn.ghost { background: none; color: var(--accent); padding-inline: 8px; }
+  .btn.ghost:hover { text-decoration: underline; }
+  .meta { font-size: 13px; color: var(--label-3); margin: 12px 0 0; }
+
+  /* hero */
+  .hero { padding-top: 64px; padding-bottom: 72px; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .hero h1 { font-size: clamp(36px, 6vw, 56px); margin-bottom: 16px; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 28px; }
+  .free { display: inline-block; font-size: 13px; font-weight: 600; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent);
+    padding: 3px 10px; border-radius: 20px; margin-bottom: 16px; }
+  @media (max-width: 820px) { .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 40px; } }
+
+  /* before / after phones */
+  .compare { display: flex; justify-content: center; align-items: center; gap: 16px; }
+  .compare figure { margin: 0; text-align: center; }
+  .compare figcaption { font-size: 13px; color: var(--label-2); margin-top: 10px; font-weight: 600; }
+  .arrow { width: 28px; height: 28px; color: var(--label-3); flex: none; }
+  .phone { width: 168px; padding: 7px; border-radius: 30px; background: var(--phone); box-shadow: var(--shadow); }
+  .screen { aspect-ratio: 9 / 19.5; border-radius: 24px; background: var(--screen); padding: 26px 12px 12px; display: grid;
+    grid-template-columns: repeat(4, 1fr); grid-auto-rows: min-content; gap: 10px 8px; align-content: start; }
+  .ic { aspect-ratio: 1; border-radius: 22%; }
+  .fd { aspect-ratio: 1; border-radius: 22%; background: var(--folder); padding: 12%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8%; }
+  .fd i { border-radius: 25%; }
+  .tile { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .tile span { font-size: 8px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); white-space: nowrap; }
+  .tile > div { width: 100%; }
+  @media (max-width: 400px) { .phone { width: 132px; } .compare { gap: 8px; } }
+
+  /* steps */
+  .alt { background: var(--bg-2); }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; counter-reset: s; }
+  .step { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+  .step::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--accent); color: var(--on-accent); font-weight: 700; margin-bottom: 14px; }
+  .step h3 { font-size: 18px; margin-bottom: 6px; }
+  .step p { margin: 0; color: var(--label-2); font-size: 15px; }
+  @media (max-width: 720px) { .steps { grid-template-columns: 1fr; } }
+
+  /* features */
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 24px; margin-top: 40px; }
+  .feature svg { width: 28px; height: 28px; color: var(--accent); margin-bottom: 10px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .feature h3 { font-size: 17px; margin-bottom: 4px; }
+  .feature p { margin: 0; color: var(--label-2); font-size: 15px; }
+  @media (max-width: 820px) { .features { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 520px) { .features { grid-template-columns: 1fr; } }
+
+  /* download / setup */
+  .setup { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; text-align: left; }
+  .box { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+  .box h3 { font-size: 17px; margin-bottom: 10px; }
+  .box ol, .box ul { margin: 0; padding-left: 20px; color: var(--label-2); font-size: 15px; }
+  .box li + li { margin-top: 6px; }
+  .box strong { color: var(--label); font-weight: 600; }
+  @media (max-width: 720px) { .setup { grid-template-columns: 1fr; } }
+
+  /* faq */
+  .faq { max-width: 720px; margin: 32px auto 0; }
+  details { border-bottom: 1px solid var(--separator); padding: 16px 0; }
+  summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+'; color: var(--label-3); font-weight: 400; font-size: 20px; line-height: 1; transition: rotate .2s; }
+  details[open] summary::after { rotate: 45deg; }
+  details p { margin: 10px 0 0; color: var(--label-2); font-size: 15px; }
+
+  /* support */
+  .support .bmc { display: inline-block; margin-top: 24px; transition: transform .1s ease-out; }
+  .support .bmc:active { transform: scale(.97); }
+  .support .bmc img { display: block; height: 60px; width: 217px; }
+
+  footer { border-top: 1px solid var(--separator); padding: 32px 0 48px; font-size: 13px; color: var(--label-3); }
+  footer p { margin: 0 0 6px; }
+
+  :focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 2px; border-radius: 6px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2.5" fill="#007AFF"/><rect x="13" y="2" width="9" height="9" rx="2.5" fill="#FF9F0A"/><rect x="2" y="13" width="9" height="9" rx="2.5" fill="#30D158"/><rect x="13" y="13" width="9" height="9" rx="2.5" fill="#BF5AF2"/></svg>
+      主畫面整理
+    </a>
+    <div class="links">
+      <a href="#how">怎麼用</a>
+      <a href="#privacy">隱私</a>
+      <a href="#faq">常見問題</a>
+      <a class="keep" href="#support">贊助</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <span class="free">免費・macOS</span>
+      <h1>一鍵整理<br /><em>iPhone 主畫面</em></h1>
+      <p class="lead">用 USB 線把 iPhone 接上 Mac，App 會依 App Store 類型自動放進資料夾。先在電腦上預覽、拖曳微調，滿意了再套用。</p>
+      <div class="cta">
+        <a class="btn" href="https://github.com/limcheyyong/iphone-homescreen-organizer/releases/latest">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          下載 Mac 版
+        </a>
+        <a class="btn ghost" href="#how">看看怎麼用</a>
+      </div>
+      <p class="meta">支援 Apple 晶片與 Intel Mac・需要 USB 線</p>
+    </div>
+
+    <div class="compare" aria-label="整理前後對比示意圖">
+      <figure>
+        <div class="phone"><div class="screen" id="before"></div></div>
+        <figcaption>整理前</figcaption>
+      </figure>
+      <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      <figure>
+        <div class="phone"><div class="screen" id="after"></div></div>
+        <figcaption>整理後</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <section id="how" class="alt">
+    <div class="wrap center">
+      <h2>三個步驟，幾分鐘整理好</h2>
+      <p class="lead">不用在手機上一個一個拖。</p>
+      <div class="steps" style="text-align:left">
+        <div class="step">
+          <h3>接上 iPhone</h3>
+          <p>用 USB 線連接並解鎖手機，按「讀取 iPhone」。App 會先自動備份你目前的排版。</p>
+        </div>
+        <div class="step">
+          <h3>一鍵分類、微調</h3>
+          <p>按「依類型分類」，理財、社群、旅遊…自動分好。不滿意可以拖曳搬移、改資料夾名稱。</p>
+        </div>
+        <div class="step">
+          <h3>套用到 iPhone</h3>
+          <p>確認後寫回手機，幾秒鐘完成。不喜歡的話，一鍵還原成原本的樣子。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap center">
+      <h2>放心交給它整理</h2>
+      <p class="lead">每一步都可以預覽，也都可以還原。</p>
+      <div class="features" style="text-align:left">
+        <div class="feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v4h4"/><path d="M12 8v4l3 2"/></svg>
+          <h3>自動備份，隨時還原</h3>
+          <p>讀取時就會備份原本的排版，套用後不滿意，按一下就回到原樣。</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          <h3>先預覽再套用</h3>
+          <p>新排版先在電腦上顯示，確認沒問題才會寫進手機。</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H6a3 3 0 0 0-3 3v2M16 3h2a3 3 0 0 1 3 3v2M8 21H6a3 3 0 0 1-3-3v-2M16 21h2a3 3 0 0 0 3-3v-2"/><path d="M9 12h6M12 9v6"/></svg>
+          <h3>拖曳就能微調</h3>
+          <p>App 可以拖到別的資料夾，資料夾可以改名、新增、刪除。</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
+          <h3>Dock 和小工具不會動</h3>
+          <p>只整理你選的主畫面頁面，常用的 Dock 和小工具保持原位。</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+          <h3>資料不離開電腦</h3>
+          <p>不用註冊、沒有帳號。排版只在你的 Mac 和 iPhone 之間處理。</p>
+        </div>
+        <div class="feature">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          <h3>完全免費</h3>
+          <p>沒有廣告、沒有付費功能。覺得好用的話，可以請我喝杯咖啡。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="alt">
+    <div class="wrap center">
+      <h2>下載與第一次使用</h2>
+      <p class="lead">只需要一台 Mac、一條 USB 線和你的 iPhone。</p>
+      <div class="setup">
+        <div class="box">
+          <h3>第一次打開 App</h3>
+          <ol>
+            <li>下載 <strong>.dmg</strong>，把 App 拖進「應用程式」資料夾。</li>
+            <li>如果 macOS 顯示「無法打開」，到 <strong>系統設定 → 隱私權與安全性</strong>，往下找到這個 App，按 <strong>強制打開</strong>。</li>
+            <li>之後就能像一般 App 一樣直接打開。</li>
+          </ol>
+        </div>
+        <div class="box">
+          <h3>連接 iPhone</h3>
+          <ol>
+            <li>用 <strong>USB 線</strong> 連接（Wi-Fi 不行），並解鎖手機。</li>
+            <li>第一次連接時，iPhone 會問「要信任這部電腦嗎？」，請按 <strong>信任</strong> 並輸入密碼。</li>
+            <li>在 App 裡按 <strong>讀取 iPhone</strong> 就可以開始了。</li>
+          </ol>
+        </div>
+      </div>
+      <div class="cta" style="margin-top:32px">
+        <a class="btn" href="https://github.com/limcheyyong/iphone-homescreen-organizer/releases/latest">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+          下載 Mac 版
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap center">
+      <h2>隱私</h2>
+      <p class="lead">你的主畫面排版、App 清單和備份都只存在你自己的 Mac 上。</p>
+      <div class="setup">
+        <div class="box">
+          <h3>會連上網路的只有這兩件事</h3>
+          <ul>
+            <li>向 Apple 公開的 <strong>App Store 查詢服務</strong> 送出 App 的識別碼（例如 com.example.app），查詢它的類型。</li>
+            <li>你按下「請我喝杯咖啡」時，用瀏覽器開啟 Buy Me a Coffee 頁面。</li>
+          </ul>
+        </div>
+        <div class="box">
+          <h3>不會做的事</h3>
+          <ul>
+            <li>不需要註冊或登入。</li>
+            <li>不收集、不上傳你的個人資料或使用紀錄。</li>
+            <li>不讀取照片、訊息或其他 App 裡的內容。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="alt">
+    <div class="wrap">
+      <h2 class="center">常見問題</h2>
+      <div class="faq">
+        <details>
+          <summary>會不會把我的主畫面弄亂？</summary>
+          <p>每次讀取都會自動備份原本的排版。套用後如果不滿意，按左邊的「還原原本排版」就會回到原樣。套用前也會先讓你預覽。</p>
+        </details>
+        <details>
+          <summary>有 Windows 版嗎？</summary>
+          <p>目前只支援 macOS。</p>
+        </details>
+        <details>
+          <summary>可以用 Wi-Fi 連接嗎？</summary>
+          <p>不行，需要用 USB 線連接，並且手機要解鎖。</p>
+        </details>
+        <details>
+          <summary>支援 iPad 嗎？</summary>
+          <p>目前只針對 iPhone 設計和測試。</p>
+        </details>
+        <details>
+          <summary>為什麼不能直接在網頁或 iPhone 上用？</summary>
+          <p>iOS 不允許網頁或手機上的 App 讀取或修改主畫面排版，只能透過電腦以 USB 連線處理。</p>
+        </details>
+        <details>
+          <summary>iOS 更新後不能用了怎麼辦？</summary>
+          <p>這個工具用的是 Apple 沒有公開的連線方式，iOS 改版時有可能失效。遇到問題請到 GitHub 回報，我會盡快更新。</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section id="support" class="support">
+    <div class="wrap center">
+      <h2>覺得有幫助嗎？</h2>
+      <p class="lead">這個工具免費提供。如果它幫你省下了時間，歡迎請我喝杯咖啡，支持我繼續維護和更新。</p>
+      <a class="bmc" href="https://www.buymeacoffee.com/jayden_lim" target="_blank" rel="noopener"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" /></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>主畫面整理是獨立開發的工具，與 Apple Inc. 沒有任何關係。iPhone、iOS、Mac、App Store 是 Apple Inc. 的商標。</p>
+    <p>使用前請確認已了解：本工具使用非公開協定修改主畫面排版，雖然會自動備份，仍請自行承擔使用風險。</p>
+  </div>
+</footer>
+
+<script>
+  // Decorative before/after home screens, drawn from a fixed palette so they look the same on every load.
+  const C = ['#FF9F0A', '#30D158', '#0A84FF', '#BF5AF2', '#FF375F', '#64D2FF', '#FFD60A', '#5E5CE6', '#FF6B35', '#34C759', '#AF52DE', '#8E8E93'];
+  const MESSY = [2, 4, 7, 1, 9, 0, 5, 3, 10, 6, 8, 2, 11, 1, 4, 9, 3, 7, 0, 6, 5, 10, 8, 4];  // hand-shuffled so 'before' looks messy
+  const before = document.getElementById('before');
+  for (let i = 0; i < 24; i++) {
+    const d = document.createElement('div');
+    d.className = 'ic';
+    d.style.background = C[MESSY[i]];
+    before.appendChild(d);
+  }
+  const folders = [['理財', 2], ['社群', 4], ['旅遊', 5], ['工作', 3], ['影音', 0], ['購物', 1], ['生活', 6], ['工具', 7]];
+  const after = document.getElementById('after');
+  for (const [name, c] of folders) {
+    const t = document.createElement('div');
+    t.className = 'tile';
+    const f = document.createElement('div');
+    f.className = 'fd';
+    for (let k = 0; k < 9; k++) {
+      const i = document.createElement('i');
+      i.style.background = C[(c + k * 3) % C.length];
+      i.style.aspectRatio = '1';
+      f.appendChild(i);
+    }
+    const s = document.createElement('span');
+    s.textContent = name;
+    t.append(f, s);
+    after.appendChild(t);
+  }
+</script>
+</body>
+</html>

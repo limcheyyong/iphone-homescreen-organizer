@@ -1,0 +1,43 @@
+/* macOS-style tokens. Light and dark follow the system setting. */
+:root {
+  color-scheme: light dark;
+  --accent: #007AFF; --accent-press: #0062CC; --on-accent: #FFFFFF;
+  --green: #28A745; --red: #E5372B;
+  --window: #FFFFFF; --sidebar: #ECECEE; --group: #F5F5F7; --group-hover: #EDEDF0;
+  --label: #1D1D1F; --label-2: rgba(60, 60, 67, .72); --label-3: rgba(60, 60, 67, .45);
+  --separator: rgba(60, 60, 67, .16); --fill: rgba(120, 120, 128, .12); --fill-strong: rgba(120, 120, 128, .2);
+  --bar: rgba(255, 255, 255, .72); --sheet: rgba(250, 250, 252, .92); --scrim: rgba(0, 0, 0, .18);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .06), 0 1px 1px rgba(0, 0, 0, .04);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, .22), 0 4px 12px rgba(0, 0, 0, .08);
+  --phone: #1C1C1E; --screen: linear-gradient(160deg, #5B7FC0, #8A6FB0 55%, #C08A6A);
+  --spring: cubic-bezier(.2, .9, .3, 1);      /* ~damping 0.8, response 0.3 */
+  --settle: cubic-bezier(.25, 1, .5, 1);      /* critically damped feel */
+  --radius-s: 8px; --radius-m: 12px; --radius-l: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #0A84FF; --accent-press: #409CFF;
+    --green: #32D74B; --red: #FF453A;
+    --window: #1E1E1E; --sidebar: #2A2A2C; --group: #262628; --group-hover: #2F2F32;
+    --label: #F5F5F7; --label-2: rgba(235, 235, 245, .7); --label-3: rgba(235, 235, 245, .4);
+    --separator: rgba(255, 255, 255, .1); --fill: rgba(120, 120, 128, .24); --fill-strong: rgba(120, 120, 128, .34);
+    --bar: rgba(30, 30, 30, .72); --sheet: rgba(44, 44, 46, .92); --scrim: rgba(0, 0, 0, .4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, .55), 0 0 0 .5px rgba(255, 255, 255, .12);
+    --phone: #0C0C0D; --screen: linear-gradient(160deg, #1F2A3D, #2B2238 55%, #352A22);
+  }
+}
+@media (prefers-contrast: more) { :root { --separator: rgba(60, 60, 67, .5); --label-2: var(--label); } }
+
+html, body { margin: 0; height: 100%; }
+body {
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+  color: var(--label); background: var(--sidebar);
+  -webkit-font-smoothing: antialiased; user-select: none; cursor: default;
+}
+/* With native vibrancy the sidebar shows the window material through a transparent body */
+html.vibrant body { background: transparent; }
+input { user-select: text; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 1px; border-radius: 6px; }
+.cdk-drag-preview { box-sizing: border-box; }

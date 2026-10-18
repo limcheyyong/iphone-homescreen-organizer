@@ -1,0 +1,77 @@
+{
+  "name": "iphone-homescreen-organizer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "用 USB 一鍵整理 iPhone 主畫面的 Mac 工具",
+  "author": "Jayden Lim",
+  "homepage": "https://limcheyyong.github.io/iphone-homescreen-organizer/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/limcheyyong/iphone-homescreen-organizer.git"
+  },
+  "main": "electron/main.js",
+  "scripts": {
+    "ng": "ng",
+    "build": "ng build --configuration development",
+    "start": "ng build --configuration development && electron .",
+    "probe": "node electron/probe.js",
+    "dist": "ng build && electron-builder --mac --publish never",
+    "release": "ng build && electron-builder --mac --publish always"
+  },
+  "build": {
+    "appId": "io.github.limcheyyong.homescreen",
+    "productName": "主畫面整理",
+    "artifactName": "Homescreen-${version}-mac.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "!electron/probe.js",
+      "dist/homescreen-mvp/browser/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "dmg": {
+      "title": "主畫面整理 ${version}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "limcheyyong",
+      "repo": "iphone-homescreen-organizer",
+      "releaseType": "release"
+    }
+  },
+  "dependencies": {
+    "bplist-parser": "0.3.2",
+    "plist": "3.1.0"
+  },
+  "devDependencies": {
+    "@angular/build": "21.2.25",
+    "@angular/cdk": "21.2.14",
+    "@angular/cli": "21.2.25",
+    "@angular/common": "21.2.25",
+    "@angular/compiler": "21.2.25",
+    "@angular/compiler-cli": "21.2.25",
+    "@angular/core": "21.2.25",
+    "@angular/forms": "21.2.25",
+    "@angular/platform-browser": "21.2.25",
+    "electron": "44.5.0",
+    "electron-builder": "26.15.3",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1",
+    "typescript": "5.9.3"
+  }
+}

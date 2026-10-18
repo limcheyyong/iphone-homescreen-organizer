@@ -1,0 +1,260 @@
+<ng-template #cell let-c>
+  <div class="app static" [title]="c.name">
+    @if (c.icon) { <img [src]="c.icon" alt="" /> } @else { <span class="ph" [style.background]="tint(c.name)">{{ first(c.name) }}</span> }
+    <span class="label">{{ c.name }}</span>
+    @if (c.note) { <span class="note">{{ c.note }}</span> }
+  </div>
+</ng-template>
+
+<div class="window" [attr.aria-busy]="!!busy()">
+  <!-- Sidebar: where am I -->
+  <nav class="sidebar" aria-label="進度">
+    <div class="device-card">
+      <svg class="device-glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M10.5 5h3"/></svg>
+      <div>
+        <strong>{{ device()?.name ?? 'iPhone' }}</strong>
+        <span class="device-state" [class.on]="device()">{{ device() ? '已透過 USB 連接' : '尚未連接' }}</span>
+      </div>
+    </div>
+    <ol class="steps">
+      @for (s of steps(); track s.label) {
+        <li [class.current]="s.current" [class.done]="s.done" [attr.aria-current]="s.current ? 'step' : null">
+          <span class="dot">@if (s.done) { <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.5l2.5 2.5L12 5.5"/></svg> } @else { {{ $index + 1 }} }</span>
+          {{ s.label }}
+        </li>
+      }
+    </ol>
+    @if (device()) {
+      <button class="side-btn" (click)="read()" [disabled]="!!busy()">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8a5 5 0 11-1.5-3.5M13 3v3h-3"/></svg>
+        重新讀取 iPhone
+      </button>
+      <button class="side-btn restore" (click)="sheet.set('restore')" [disabled]="!!busy()">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6h7a3.5 3.5 0 010 7H6M3 6l3-3M3 6l3 3"/></svg>
+        還原原本排版
+      </button>
+    }
+    <button class="side-btn coffee" (click)="donate()">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6h8v4a3 3 0 01-3 3H6a3 3 0 01-3-3V6zM11 7h1a1.5 1.5 0 010 3h-1M5.5 2.5v1.5M8 2.5v1.5"/></svg>
+      請我喝杯咖啡
+    </button>
+  </nav>
+
+  <main class="content">
+    <header class="toolbar">
+      <div class="toolbar-title">
+        <h1>{{ device() ? '主畫面' : '主畫面整理' }}</h1>
+        @if (busy()) { <p role="status">{{ busy() }}</p> }
+        @else if (device() && view() === 'new') { <p>{{ folderCount() }} 個資料夾、{{ movedCount() }} 個 App{{ edited() ? '，含手動調整' : '' }}</p> }
+        @else if (device()) { <p>{{ applied() ? '已套用新排版' : '已備份原本排版' }}</p> }
+      </div>
+
+      @if (device()) {
+        <div class="segmented view-switch" role="tablist" aria-label="檢視">
+          <button role="tab" [attr.aria-selected]="view() === 'current'" (click)="view.set('current')">目前</button>
+          <button role="tab" [attr.aria-selected]="view() === 'new'" (click)="view.set('new')" [disabled]="!hasNew()">新排版</button>
+        </div>
+        <div class="popover-anchor">
+          <button class="btn sort-btn" [class.open]="sortOpen()" (click)="sortOpen.set(!sortOpen())" [disabled]="!!busy()" aria-haspopup="dialog" [attr.aria-expanded]="sortOpen()">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M4.5 8h7M6.5 12h3"/></svg>
+            分類選項
+            <svg class="chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 6.5L8 10l3.5-3.5"/></svg>
+          </button>
+          @if (sortOpen()) {
+            <div class="popover" role="dialog" aria-label="分類選項">
+              <section>
+                <h2>整理哪些頁面</h2>
+                <div class="chips">
+                  @for (p of homePages(); track p.n) {
+                    <button class="chip" [attr.aria-pressed]="scope().has(p.n)" (click)="togglePage(p.n)">{{ p.title }}</button>
+                  }
+                </div>
+                <p class="caption">沒選的頁面保持原樣。Dock 和小工具都不會移動。</p>
+              </section>
+              <section>
+                <h2>分類方式</h2>
+                <p class="caption">依 App Store 的類型放進資料夾，例如理財、旅遊、社群。</p>
+                <label class="inline">
+                  少於
+                  <select [value]="minSize()" (change)="minSize.set(+$any($event.target).value)">
+                    @for (n of [1, 2, 3, 4, 5]; track n) { <option [value]="n" [selected]="minSize() === n">{{ n }}</option> }
+                  </select>
+                  個 App 的類型，併進「其他」
+                </label>
+              </section>
+              <footer>
+                @if (edited()) { <span class="caption warn">會取代手動調整</span> }
+                <span class="spacer"></span>
+                <button class="btn primary" (click)="generate()" [disabled]="!scope().size || !!busy()">{{ hasNew() ? '重新分類' : '產生新排版' }}</button>
+              </footer>
+            </div>
+          }
+        </div>
+        @if (hasNew()) {
+          <button class="btn primary" (click)="sheet.set('apply')" [disabled]="!!busy()">套用到 iPhone…</button>
+        } @else {
+          <button class="btn primary" (click)="generate()" [disabled]="!scope().size || !!busy()">依類型分類</button>
+        }
+      }
+      @if (busy()) { <div class="progress" aria-hidden="true"></div> }
+    </header>
+
+    @if (error()) {
+      <div class="banner" role="alert">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z"/><path d="M8 6.5v3M8 11.5v.01"/></svg>
+        <p>{{ error() }}</p>
+        <button class="btn small" (click)="error.set(null)">關閉</button>
+      </div>
+    }
+
+    <div class="body">
+      @if (!device()) {
+        <section class="empty">
+          <svg class="hero" viewBox="0 0 160 120" aria-hidden="true">
+            <rect x="20" y="14" width="44" height="92" rx="10"/><path d="M36 20h12"/>
+            <path class="cable" d="M42 106v6c0 4 3 6 7 6h42c5 0 8-3 8-8V86"/>
+            <rect x="86" y="44" width="56" height="42" rx="5"/><path d="M80 94h68"/>
+          </svg>
+          <h2>用 USB 線接上 iPhone</h2>
+          <p>解鎖手機。第一次連接時，iPhone 會問要不要信任這台電腦，請點「信任」。讀取只會備份並顯示目前的排版，不會改動手機。</p>
+          <button class="btn primary large" (click)="read()" [disabled]="!!busy()">讀取 iPhone</button>
+          @if (!inElectron) { <p class="hint">目前在瀏覽器中，請用 <code>npm start</code> 開啟桌面版。</p> }
+        </section>
+      } @else if (view() === 'current') {
+        @if (applied()) {
+          <section class="success">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21"/><path d="M15 24.5l6 6 12-13"/></svg>
+            <div>
+              <h2>已套用到 iPhone</h2><p>這是手機現在的樣子。不滿意的話，可以點左邊的「還原原本排版」。</p>
+              <p class="thanks">這個工具免費使用，覺得有幫助的話歡迎贊助：</p>
+              <button class="bmc" (click)="donate()" aria-label="Buy Me a Coffee，請我喝杯咖啡"><img src="bmc-button.png" alt="" /></button>
+            </div>
+          </section>
+        } @else {
+          <dl class="stats">
+            <div><dt>App</dt><dd>{{ stats().apps }}</dd></div>
+            <div><dt>資料夾</dt><dd>{{ stats().folders }}</dd></div>
+            @if (stats().widgets) { <div><dt>小工具</dt><dd>{{ stats().widgets }}</dd></div> }
+            <div><dt>頁面</dt><dd>{{ stats().pages }}</dd></div>
+          </dl>
+          <section class="cta">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>
+            <div class="cta-text">
+              @if (hasNew()) {
+                <h2>新排版已經準備好了</h2>
+                <p>看一下新排版、拖曳微調，滿意後再套用到 iPhone。</p>
+              } @else {
+                <h2>一鍵依類型整理</h2>
+                <p>依 App Store 類型把 App 放進資料夾。{{ scopeLabel() }}套用前可以先預覽和微調。</p>
+              }
+            </div>
+            @if (hasNew()) {
+              <button class="btn primary large" (click)="view.set('new')">查看新排版</button>
+            } @else {
+              <button class="link" (click)="sortOpen.set(true)" [disabled]="!!busy()">選項…</button>
+              <button class="btn primary large" (click)="generate()" [disabled]="!scope().size || !!busy()">依類型分類</button>
+            }
+          </section>
+        }
+        <section class="page-block">
+          <header class="page-head"><h2>Dock</h2><span class="tag">不會改變</span></header>
+          <div class="group"><div class="apps">
+            @for (c of dockCells(); track $index) { <ng-container *ngTemplateOutlet="cell; context: { $implicit: c }" /> }
+          </div></div>
+        </section>
+        @for (p of homePages(); track p.n) {
+          <section class="page-block" [class.out]="!scope().has(p.n) && !applied()">
+            <header class="page-head">
+              <h2>{{ p.title }}</h2>
+              @if (!applied()) {
+                <button class="tag" [class.on]="scope().has(p.n)" (click)="togglePage(p.n)" [attr.aria-pressed]="scope().has(p.n)"
+                  [title]="scope().has(p.n) ? '這一頁會被重新整理，點一下改成保持原樣' : '這一頁保持原樣，點一下改成要整理'">
+                  {{ scope().has(p.n) ? '要整理' : '保持原樣' }}
+                </button>
+              }
+            </header>
+            <div class="groups">
+              @for (card of p.cards; track $index) {
+                <section class="group" [class.loose]="card.kind !== 'folder'">
+                  <header>
+                    @if (card.kind === 'folder') { <svg class="kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h4l1.2 1.5H14v6.5H2z"/></svg> }
+                    <h3>{{ card.name }}</h3>
+                    <span class="count">{{ card.cells.length }}</span>
+                  </header>
+                  <div class="apps">
+                    @for (c of card.cells; track $index) { <ng-container *ngTemplateOutlet="cell; context: { $implicit: c }" /> }
+                  </div>
+                </section>
+              }
+            </div>
+          </section>
+        }
+      } @else {
+        <p class="rules-line">依 App Store 類型分類。拖曳或點一下 App 可以搬到其他資料夾，資料夾名稱可以直接改。</p>
+        <div class="groups" cdkDropListGroup>
+          @for (f of folders(); track $index; let i = $index) {
+            <section class="group editable">
+              <header>
+                <input class="name" [value]="f.name" (change)="rename(i, $any($event.target).value)" aria-label="資料夾名稱" spellcheck="false" />
+                <span class="count">{{ f.apps.length }}</span>
+                <button class="icon-btn" (click)="removeFolder(i)" [attr.aria-label]="'刪除資料夾 ' + f.name" title="刪除資料夾">
+                  <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>
+                </button>
+              </header>
+              <div class="apps" cdkDropList cdkDropListOrientation="mixed" [cdkDropListData]="f.apps" (cdkDropListDropped)="drop($event)">
+                @for (k of f.apps; track k) {
+                  <button class="app" cdkDrag (click)="openMenu($event, k, i)"
+                    [attr.aria-label]="info(k)?.name + '，' + (info(k)?.genre ?? '未知類型') + '。按下可移到其他資料夾'"
+                    [title]="(info(k)?.genre ?? '未知類型') + '，原本在' + info(k)?.where">
+                    @if (info(k)?.icon) { <img [src]="info(k)!.icon" alt="" draggable="false" /> }
+                    @else { <span class="ph" [style.background]="tint(info(k)?.name ?? k)">{{ first(info(k)?.name ?? k) }}</span> }
+                    <span class="label">{{ info(k)?.name ?? k }}</span>
+                    <div *cdkDragPlaceholder class="app placeholder"></div>
+                  </button>
+                }
+                @empty { <p class="drop-here">把 App 拖到這裡</p> }
+              </div>
+            </section>
+          }
+          <button class="add" (click)="addFolder()">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            新增資料夾
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }
+  </main>
+
+  @if (menu(); as m) {
+    <div class="menu" role="menu" [style.left.px]="m.x" [style.top.px]="m.y" aria-label="移到資料夾">
+      <p>移到…</p>
+      @for (f of folders(); track $index) {
+        @if ($index !== m.from) { <button role="menuitem" (click)="moveTo($index)">{{ f.name }}</button> }
+      }
+    </div>
+  }
+
+  @if (sheet(); as s) {
+    <div class="scrim" (click)="sheet.set(null)"></div>
+    <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="sheet-title">
+      @if (s === 'apply') {
+        <h2 id="sheet-title">把新排版套用到 iPhone？</h2>
+        <p>會建立 {{ folderCount() }} 個資料夾、整理 {{ movedCount() }} 個 App。{{ keepPages().length ? '沒選的頁面和 Dock 不會改變。' : 'Dock 不會改變。' }}</p>
+        <p class="caption">原本的排版已經備份，隨時可以還原。</p>
+        <footer>
+          <button class="btn" (click)="sheet.set(null)">取消</button>
+          <button class="btn primary" (click)="confirmApply()" autofocus>套用</button>
+        </footer>
+      } @else {
+        <h2 id="sheet-title">還原成原本的排版？</h2>
+        <p>iPhone 會回到這次讀取時的樣子。讀取之後在手機上做的變更會被覆蓋。</p>
+        <footer>
+          <button class="btn" (click)="sheet.set(null)">取消</button>
+          <button class="btn primary" (click)="confirmRestore()" autofocus>還原</button>
+        </footer>
+      }
+    </div>
+  }
+</div>
