@@ -31,9 +31,20 @@ jobs:
           v=$(node -p "require('./package.json').version")
           [ "v$v" = "$GITHUB_REF_NAME" ] || { echo "tag $GITHUB_REF_NAME does not match package.json version $v"; exit 1; }
 
+      # Create the release up front: when electron-builder has to create it itself, its parallel
+      # uploads race to create it twice and the DMG upload can silently go missing.
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and publish release
         if: startsWith(github.ref, 'refs/tags/v')
-        run: npm run release
+        run: |
+          npm run release
+          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' | grep -qx 'Homescreen-mac.dmg' \
+            || { echo "Homescreen-mac.dmg is missing from the release"; exit 1; }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -44,5 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dmg
-          path: release/*.dmg
+          path: |
+            release/*.dmg
+            release/latest-mac.yml
           retention-days: 7
