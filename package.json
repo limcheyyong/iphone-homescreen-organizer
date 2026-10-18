@@ -21,7 +21,7 @@
   "build": {
     "appId": "io.github.limcheyyong.homescreen",
     "productName": "主畫面整理",
-    "artifactName": "Homescreen-${version}-mac.${ext}",
+    "artifactName": "Homescreen-mac.${ext}",
     "directories": {
       "output": "release"
     },

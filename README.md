@@ -16,7 +16,7 @@ npm start       # 開啟桌面版
 
 ## 打包與發佈
 ```bash
-npm run dist    # 本機打包，輸出 release/Homescreen-<版本>-mac.dmg（universal，Apple 晶片和 Intel 都能跑）
+npm run dist    # 本機打包，輸出 release/Homescreen-mac.dmg（universal，Apple 晶片和 Intel 都能跑）
 ```
 發佈新版本由 GitHub Actions（`.github/workflows/release.yml`）自動完成：
 1. 修改 `package.json` 的 `version`，例如 `0.1.1`
